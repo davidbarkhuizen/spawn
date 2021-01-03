@@ -1,4 +1,4 @@
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 from sserver import listen
 import socket
 import json
@@ -29,13 +29,13 @@ def worker(index, host, port):
     terminate = False
     while not terminate:
 
-        time.sleep(10 + index)
+        time.sleep((index + 1) * 3)
 
         msg = {
             'msg': f'hello from worker {index}'
         }
         rsp = send_message_to_control(host, port, msg)
-        print(f'{index} recvd from control: {msg}')
+        print(f'worker {index} recvd msg from control: {msg}')
 
 worker_processes = []
 
@@ -48,13 +48,35 @@ def spawn_workers(count, host, port):
 
 def launch(host, port):
 
+    q_to_server = Queue()
+    q_from_server = Queue()
+
     # launch TCP socket server in own thread
 
     # launch local machine workers
     worker_count = 2
     spawn_workers(worker_count, host, port)
 
-    listen(host, port)
+    p = Process(target=listen, args=(host, port, q_to_server, q_from_server))
+    p.start()
+
+    while True:
+        
+        if not q_to_server.empty():
+
+            rq_env = q_to_server.get()
+            print(rq_env)
+
+            rq_id = rq_env['id']
+
+            rq = rq_env['rq']
+
+            rsp_env = {
+                'id': rq_id,
+                'rsp': f'yo from server to {rq}'
+            }
+            
+            q_from_server.put(rsp_env)
 
 def terminate():
 
