@@ -49,16 +49,16 @@ def iterate(initial_state, initial_partial_solution):
     return new_solutions, interim_states
 
 def worker(index, host, port, message_interval_ms):
-    print(f'worker {index} launched')
     
+    def log_state():
+        print(f'worker {index}: {workerState}')
+
     workerState = WorkerState.Idle
 
     def handle_control_message(control_message):
-
-        if 
-
-
         pass
+
+    log_state()
 
     terminate = False
     while not terminate:

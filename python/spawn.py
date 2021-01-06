@@ -1,5 +1,5 @@
 from multiprocessing import Process, Queue
-from sserver import listen
+from socket_server import listen
 import socket
 import json
 import struct
@@ -18,14 +18,14 @@ from worker import worker
 
 worker_processes = []
 
-def spawn_workers(count, host, port):
+def spawn_workers(count, host, port, message_interval_ms):
 
     for z in range(count):
-        p = Process(target=worker, args=(z, host, port))
+        p = Process(target=worker, args=(z, host, port, message_interval_ms))
         p.start()
         worker_processes.append(p)
 
-def launch(host, port):
+def launch(host, port, worker_message_interval_ms):
 
     q_to_server = Queue()
     q_from_server = Queue()
@@ -34,7 +34,7 @@ def launch(host, port):
 
     # launch local machine workers
     worker_count = 2
-    spawn_workers(worker_count, host, port)
+    spawn_workers(worker_count, host, port, worker_message_interval_ms)
 
     p = Process(target=listen, args=(host, port, q_to_server, q_from_server))
     p.start()
@@ -53,7 +53,7 @@ def launch(host, port):
             rq_id = rq_env['id']
 
             status_msg = rq_env['rq']
-
+            print(status_msg)
             # determine what immediate response, if any, is appropriate
             # check if a queued response is appropriate/relevant
 
@@ -68,7 +68,7 @@ def launch(host, port):
 
             rsp_env = {
                 'id': rq_id,
-                'rsp': f'yo from server to {rq}'
+                'rsp': f'yo from server to {rq_id}'
             }
             
             q_from_server.put(rsp_env)
@@ -77,7 +77,7 @@ def launch(host, port):
 
 def terminate():
 
-    for wproc in worker_processes:
-        wproc.join()
+    for worker_process in worker_processes:
+        worker_process.join()
 
-launch('localhost', 8888)
+launch('localhost', 8888, 200)
