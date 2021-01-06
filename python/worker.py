@@ -3,6 +3,16 @@ import struct
 import socket
 import time
 
+from enum import Enum
+
+WorkerState = Enum('WorkerState', 
+    'Idle Busy Paused'
+)
+
+ControlCommand = Enum('ControlCommand',
+    'Solve Iterate Pause Cancel'
+)
+
 def send_message_to_control(host, port, msg):
 
     request_data = bytes(json.dumps(msg), 'utf-8')
@@ -21,22 +31,54 @@ def send_message_to_control(host, port, msg):
 
         return response
 
-def worker(index, host, port):
+def iterate(initial_state, initial_partial_solution):
+    
+    # from initial state
+    # work out first child states
+    # create node corresponding to initial state
+    # create child nodes for each child state
+
+    # if we are set to return only child states
+    # then return (them) at this point
+
+    # otherwise, start depth-first search
+
+    new_solutions = []
+    interim_states = []
+
+    return new_solutions, interim_states
+
+def worker(index, host, port, message_interval_ms):
     print(f'worker {index} launched')
     
+    workerState = WorkerState.Idle
+
+    def handle_control_message(control_message):
+
+        if 
+
+
+        pass
+
     terminate = False
     while not terminate:
 
-        # notify c&c that we exist
-        # request a job (starting state) from c&c, start working job
-        # periodically send status updates while working, cancel/pause current job if requested
-        # send solutions while working
-        # send notice of job completion
-
-        time.sleep((index + 1) * 3)
-
-        msg = {
-            'msg': f'hello from worker {index}'
+        status_msg = {
+            'id': index,
+            'workerState': workerState,
+            'new_solutions': [],
+            'interim_states': []
         }
-        rsp = send_message_to_control(host, port, msg)
-        print(f'worker {index} recvd msg from control: {rsp}')
+
+        if workerState in [WorkerState.Idle, WorkerState.Paused]:
+            time.sleep(message_interval_ms)
+        elif workerState == WorkerState.Busy:
+            initial_state = None
+            initial_partial_solution = None
+            new_solutions, interim_states = iterate(initial_state, initial_partial_solution)
+            
+            status_msg['new_solutions'].extend(new_solutions)
+            status_msg['interim_states'].extend(interim_states)
+
+        control_msg = send_message_to_control(host, port, status_msg)
+        handle_control_message(control_msg)

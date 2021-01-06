@@ -52,10 +52,19 @@ def launch(host, port):
 
             rq_id = rq_env['id']
 
-            rq = rq_env['rq']
+            status_msg = rq_env['rq']
 
             # determine what immediate response, if any, is appropriate
             # check if a queued response is appropriate/relevant
+
+            # 1 - determine first gen children, i.e starting points
+            # 2 - determine the order in which to evaluate first children
+            # 3 - when a worker report as idle, see if there is a job for him to do
+            #        i.e. a partial solution to complete
+            #        if there is, task the worker with the job
+            # 4 - wait, collecting solutions
+            # 5 - once there is no more work to be done, instruct remaining workers to die
+            # 6 - report final solution set
 
             rsp_env = {
                 'id': rq_id,
